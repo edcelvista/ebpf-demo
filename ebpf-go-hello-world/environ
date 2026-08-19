@@ -1,0 +1,20 @@
+# Set desired Project Home
+export PROJECT_HOME=/Users/x/x/DevOps/_C_Projects/ebpf-go-hello-world
+export SSH_USER=ubuntu
+# No Change - mkdir .ssh && ssh-keygen -t rsa -b 4096 -C "administrator@edcelvista.com" -f .ssh/id_rsa
+export MULTIPASS_KEY=$PROJECT_HOME/.ssh/id_rsa
+# Set Ubuntu version. 
+export UBUNTU_REL=24.04
+# Number of VMs
+export NODE_COUNT=1
+# Desired multipass node name prefix
+export NODE_PREFIX=ebpf-working-environment
+# Compute for the Virtual nodes
+export CPU=1
+export MEM=2G
+# Disk can be expanded if required but can't be shrinked
+export DISK=8G
+# Cloud Init
+export CLOUD_INIT=./cloud-init.yml
+# Multipass Binary
+export MULTIPASS_BIN=/usr/local/bin/multipass

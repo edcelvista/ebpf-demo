@@ -1,0 +1,32 @@
+package_update: true
+package_upgrade: true
+users:
+  - default
+  - name: ubuntu
+    groups: [sudo]
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC6Jln3co3ajwBwYr+QIgxltLsdhAccy2Q3w+MsfiCWz2X3qTSzcKRoZAW54LaUSndYJzM8mt6T7hmtxfPyeiCUvYld0xn12bEuzpPvWeFem8EgODptUwzUyO91vbtmN1o7meQFU65p/tH0vs6srRzib58sSYIgnzCVLI4Ss2cBJvCqwn4d18meEekC6/Qj1f4jIHHP7Lt3tPk2bN5WwvqA30uu2G0YRaku+Nv0CardauBQLFmBcE1k5mRh7TrSQFKjn3xZbhVQ/gPM2HHtaA7RhdRG4c0/0E6sZAaCm1fjInG9JHyk6piLdu3KDMIHYf5/IbcGUiV+OSwLNCsnH4hU57zMlbhmWpTT1T8s3cJbOsAMhbvnPOLm6tUxho254hb8tmwuER4yZ0cQAQMPRybPfKOMQd3ket0ZvdodvfHOYT+Ybm6fo7t+hjsbobFOYFL8ppMlx20FH+rFix7dIypLsoMHitXRvtAzZ5mHf/DxfnY+EF+yalNrqb52qlmTVwjIvS0BaredNWYx0PfZWSSVwWSQKUk6bD5ErXGFTBDT1mPKmIRVE023h0q1AytlUSz/aBaWniLe/Ui76SIk6MNOI8H2kNbY8RW2NE4LkVuYnlPE9N+h7HFImDYfd+kHeJqZZN8xmTSHpMomXGLv0ucf/yd2PUor5pnbtoPk4W0CqQ== administrator@edcelvista.com
+chpasswd:
+  list: |
+    ubuntu:ubuntu
+  expire: False
+packages:
+  - net-tools
+  - golang-go
+  - clang
+  - llvm
+  - linux-libc-dev
+  - linux-tools-common
+  - linux-tools-generic
+  - libbpf-dev
+  - linux-lowlatency-tools-common
+  - build-essential
+  - python3
+  - python3-pip
+  - python3-venv
+# Run additional commands after setup:
+runcmd:
+  - echo 'VM setup complete!' > /tmp/cloud-init.log
+  - curl -LsSf https://astral.sh/uv/install.sh | sh
