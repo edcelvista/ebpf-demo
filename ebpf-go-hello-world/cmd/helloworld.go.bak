@@ -1,4 +1,4 @@
-package main
+package hello
 
 import (
 	"bytes"
@@ -15,32 +15,31 @@ type Event struct { // This must correspond to your C structure:
 	Message [32]byte
 }
 
-func main() {
-	if err := rlimit.RemoveMemlock(); err != nil { // Addressess (MEMLOCK may be too low) | Allow eBPF memory allocation
-		log.Fatal(err)
-	}
-
-	spec, err := ebpf.LoadCollectionSpec("../bpf/helloworld.bpf.o") // Load the eBPF object , clang -target bpf  parses that ELF object.
+func hello() {
+	spec, err := ebpf.LoadCollectionSpec("../bpf/bin/helloworld.bpf.o") // Load the eBPF object , clang -target bpf  parses that ELF object.
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	coll, err := ebpf.NewCollection(spec) // Creates athe actual kernel-side eBPF objects
-	// coll
-	// ├── Programs
-	// │   └── hello
-	// │
-	// └── Maps
-	// 	└── events
-
+	/*
+		coll
+		├── Programs
+		│   └── hello
+		│
+		└── Maps
+			└── events
+	*/
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer coll.Close()
 
-	// Attach the eBPF program to the kprobe. Attach the eBPF program called hello to the kernel function do_sys_openat2
-	// SEC("kprobe/do_sys_openat2")
-	// int hello(void *ctx)
+	/*
+		Attach the eBPF program to the kprobe. Attach the eBPF program called hello to the kernel function do_sys_openat2
+		SEC("kprobe/do_sys_openat2")
+		int hello(void *ctx)
+	*/
 	kp, err := link.Kprobe("do_sys_openat2", coll.Programs["hello"], nil)
 	if err != nil {
 		log.Fatal(err)
@@ -49,11 +48,12 @@ func main() {
 
 	// Open the ring buffer.
 	rd, err := ringbuf.NewReader(coll.Maps["events"])
-	// struct { // coll
-	// __uint(type, BPF_MAP_TYPE_RINGBUF);
-	// __uint(max_entries, 1 << 24);
-	// } events SEC(".maps");
-
+	/*
+		struct { // coll
+		__uint(type, BPF_MAP_TYPE_RINGBUF);
+		__uint(max_entries, 1 << 24);
+		} events SEC(".maps");
+	*/
 	if err != nil {
 		log.Fatal(err)
 	}

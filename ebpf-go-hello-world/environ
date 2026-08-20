@@ -18,3 +18,5 @@ export DISK=8G
 export CLOUD_INIT=./cloud-init.yml
 # Multipass Binary
 export MULTIPASS_BIN=/usr/local/bin/multipass
+# Network
+export NETWORKINTERFACE=en0

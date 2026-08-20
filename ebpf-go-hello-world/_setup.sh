@@ -49,7 +49,7 @@ provision(){
       ((count=count+1))
       continue
     fi
-    $MULTIPASS_BIN launch $UBUNTU_REL -n "$NODE_PREFIX$count" -c $CPU -m $MEM -d $DISK --cloud-init $CLOUD_INIT
+    $MULTIPASS_BIN launch $UBUNTU_REL -n "$NODE_PREFIX$count" -c $CPU -m $MEM -d $DISK --cloud-init $CLOUD_INIT --network $NETWORKINTERFACE
     info "Mounting host path $PROJECT_HOME to /mnt/workspace"
     $MULTIPASS_BIN mount $PROJECT_HOME "$NODE_PREFIX$count":/mnt/workspace --uid-map $(id -u):1000
     

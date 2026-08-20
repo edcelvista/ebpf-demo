@@ -2,3 +2,7 @@
 *.mod
 *.sum
 *.h
+**/bin/**
+.fuse*
+*_bpfeb.go
+*_bpfel.go

@@ -79,6 +79,15 @@ Every kernel syscall `do_sys_openat2()` a hook triggers a `hello()` function whi
  ┌──────────────┐
  │ Go program   │
  └──────────────┘
+
+ eBPF kernel                        Go
+    │                               │
+    │       ring buffer             │
+    │  ┌───────────────────────┐    │
+    ├─►│ event │ event │ event │───►│
+    │  └───────────────────────┘    │
+    │                               │
+    └── produce                  consume
 ```
 
 ## Trigger Flow
@@ -123,6 +132,7 @@ bpf_ringbuf_submit(e, 0);
 ```
 record, err := rd.Read()
 ```
+
 ### Go event decoder:
 ```
 record, err := rd.Read()
@@ -140,4 +150,34 @@ Ring buffer
 							│
 							▼
 						record
+```
+
+# Networ Tracer _(sample use-case)_
+Bind to Kernel `tracepoint/sock/inet_sock_set_state` and capture each connection states and calculate latency.
+
+```
+$ curl https://httpbin.org/delay/5
+{
+  "args": {},
+  "data": "",
+  "files": {},
+  "form": {},
+  "headers": {
+    "Accept": "*/*",
+    "Host": "httpbin.org",
+    "User-Agent": "curl/8.5.0",
+    "X-Amzn-Trace-Id": "Root=1-6a874c53-0e5eb31966c8529914d35afe"
+  },
+  "origin": "110.93.89.24",
+  "url": "https://httpbin.org/delay/5"
+}
+```
+
+```
+2026/08/21 02:49:53 eBPF NET tracer running...
+PID=12200 192.168.252.96:0 -> 3.210.29.144:443  CLOSE -> SYN_SENT latency=0.000005s
+PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  SYN_SENT -> ESTABLISHED latency=0.216879s
+PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  ESTABLISHED -> FIN_WAIT1 latency=5.963027s
+PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  FIN_WAIT1 -> CLOSING latency=6.173842s
+PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  CLOSING -> CLOSE latency=6.179207s
 ```
