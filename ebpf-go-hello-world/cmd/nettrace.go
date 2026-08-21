@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/cilium/ebpf/link"
@@ -30,6 +31,10 @@ type Event struct { // This must correspond to your C structure: tcp_event
 	OldState uint8
 	NewState uint8
 	Family   uint16
+
+	Comm string
+	Cwd  string
+	Cmd  string
 }
 
 func main() {
@@ -111,6 +116,22 @@ func main() {
 		event.OldState = record.RawSample[36]
 		event.NewState = record.RawSample[37]
 		event.Family = binary.LittleEndian.Uint16(record.RawSample[38:40])
+		event.Comm = string(record.RawSample[40:56])
+
+		cwd, _ := os.Readlink(
+			fmt.Sprintf("/proc/%d/cwd", event.PID),
+		)
+		event.Cwd = cwd
+
+		cmdline, err := os.ReadFile(
+			fmt.Sprintf("/proc/%d/cmdline", event.PID),
+		)
+		if err != nil {
+			cmdline = nil
+		}
+		cmd := strings.ReplaceAll(string(cmdline), "\x00", " ")
+		cmd = strings.TrimSpace(cmd)
+		event.Cmd = cmd
 
 		/*
 		 * bytes.NewReader does NOT copy RawSample.
@@ -127,8 +148,11 @@ func main() {
 		// }
 
 		fmt.Printf(
-			"PID=%d %s:%d -> %s:%d  %s -> %s latency=%fs\n",
+			"PID=%d COMM=%s CWD=%s CMD=%s CONN=%s:%d->%s:%d[%s]->[%s] LATENCY=%fs\n",
 			event.PID,
+			event.Comm,
+			event.Cwd,
+			event.Cmd,
 			ipv4(event.Saddr),
 			event.Sport,
 			ipv4(event.Daddr),

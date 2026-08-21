@@ -152,7 +152,7 @@ Ring buffer
 						record
 ```
 
-# Networ Tracer _(sample use-case)_
+# Network Tracer _(sample use-case)_
 Bind to Kernel `tracepoint/sock/inet_sock_set_state` and capture each connection states and calculate latency.
 
 ```
@@ -166,18 +166,18 @@ $ curl https://httpbin.org/delay/5
     "Accept": "*/*",
     "Host": "httpbin.org",
     "User-Agent": "curl/8.5.0",
-    "X-Amzn-Trace-Id": "Root=1-6a874c53-0e5eb31966c8529914d35afe"
+    "X-Amzn-Trace-Id": "Root=1-6a888743-2fd9dcf10d24a4334b57eba0"
   },
-  "origin": "110.93.89.24",
+  "origin": "110.93.90.236",
   "url": "https://httpbin.org/delay/5"
 }
 ```
 
 ```
-2026/08/21 02:49:53 eBPF NET tracer running...
-PID=12200 192.168.252.96:0 -> 3.210.29.144:443  CLOSE -> SYN_SENT latency=0.000005s
-PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  SYN_SENT -> ESTABLISHED latency=0.216879s
-PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  ESTABLISHED -> FIN_WAIT1 latency=5.963027s
-PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  FIN_WAIT1 -> CLOSING latency=6.173842s
-PID=12200 192.168.252.96:43390 -> 3.210.29.144:443  CLOSING -> CLOSE latency=6.179207s
+2026/08/22 01:13:34 eBPF NET tracer running...
+PID=10216 COMM=curl CWD=/proc/1 CMD=curl https://httpbin.org/delay/5 CONN=192.168.252.101:0->44.223.250.126:443[CLOSE]->[SYN_SENT] LATENCY=0.000012s
+PID=10216 COMM=swapper/0 CWD=/proc/1 CMD=curl https://httpbin.org/delay/5 CONN=192.168.252.101:33810->44.223.250.126:443[SYN_SENT]->[ESTABLISHED] LATENCY=0.232189s
+PID=10216 COMM=curl CWD=/proc/1 CMD=curl https://httpbin.org/delay/5 CONN=192.168.252.101:33810->44.223.250.126:443[ESTABLISHED]->[FIN_WAIT1] LATENCY=5.985775s
+PID=10216 COMM=swapper/0 CWD= CMD= CONN=192.168.252.101:33810->44.223.250.126:443[FIN_WAIT1]->[CLOSING] LATENCY=6.272831s
+PID=10216 COMM=swapper/0 CWD= CMD= CONN=192.168.252.101:33810->44.223.250.126:443[CLOSING]->[CLOSE] LATENCY=6.273178s
 ```

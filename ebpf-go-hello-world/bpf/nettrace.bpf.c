@@ -47,6 +47,8 @@ struct tcp_event {
     __u8 oldstate;
     __u8 newstate;
     __u16 family;
+
+    char comm[16];
 };
 
 struct {
@@ -271,6 +273,7 @@ int trace_tcp_state(struct trace_event_raw_inet_sock_set_state *ctx){
         event->oldstate = ctx->oldstate;
         event->newstate = ctx->newstate;
         event->family = BPF_CORE_READ(sk, __sk_common.skc_family);
+        bpf_get_current_comm(event->comm, sizeof(event->comm));
 
         bpf_ringbuf_submit(event, 0);
     }

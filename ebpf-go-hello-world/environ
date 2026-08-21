@@ -1,5 +1,5 @@
 # Set desired Project Home
-export PROJECT_HOME=/Users/x/x/DevOps/_C_Projects/ebpf-go-hello-world
+export PROJECT_HOME=/Users/edcelvista/Documents/_edcelvista/CurrentFiles/DevOps/_C_Projects/ebpf-demo/ebpf-go-hello-world
 export SSH_USER=ubuntu
 # No Change - mkdir .ssh && ssh-keygen -t rsa -b 4096 -C "administrator@edcelvista.com" -f .ssh/id_rsa
 export MULTIPASS_KEY=$PROJECT_HOME/.ssh/id_rsa
@@ -18,5 +18,3 @@ export DISK=8G
 export CLOUD_INIT=./cloud-init.yml
 # Multipass Binary
 export MULTIPASS_BIN=/usr/local/bin/multipass
-# Network
-export NETWORKINTERFACE=en0
