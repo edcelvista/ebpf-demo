@@ -5,13 +5,13 @@ init:
 	go get github.com/cilium/ebpf
 	go mod tidy
 
-generate: # bpf2go generate go bindings from c program | use this to avoid compiling ebpf C code separately
-	go generate
+run: 
+	go run .
 
 build:
 	rm -rf bin
 	mkdir bin
-	go build -o bin/nettrace .
+	go build -o bin/helloworld .
 
 clean:
 	go clean -cache

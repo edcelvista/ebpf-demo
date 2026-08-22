@@ -8,7 +8,6 @@ import (
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
-	"github.com/cilium/ebpf/rlimit"
 )
 
 type Event struct { // This must correspond to your C structure:
@@ -21,7 +20,6 @@ func hello() {
 		log.Fatal(err)
 	}
 
-	coll, err := ebpf.NewCollection(spec) // Creates athe actual kernel-side eBPF objects
 	/*
 		coll
 		├── Programs
@@ -30,6 +28,7 @@ func hello() {
 		└── Maps
 			└── events
 	*/
+	coll, err := ebpf.NewCollection(spec) // Creates the  actual kernel-side eBPF objects
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -46,14 +45,13 @@ func hello() {
 	}
 	defer kp.Close()
 
-	// Open the ring buffer.
-	rd, err := ringbuf.NewReader(coll.Maps["events"])
 	/*
-		struct { // coll
-		__uint(type, BPF_MAP_TYPE_RINGBUF);
-		__uint(max_entries, 1 << 24);
+		struct {
+			__uint(type, BPF_MAP_TYPE_RINGBUF);
+			__uint(max_entries, 1 << 24);
 		} events SEC(".maps");
 	*/
+	rd, err := ringbuf.NewReader(coll.Maps["events"]) // Open the ring buffer.
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,23 +62,15 @@ func hello() {
 
 	for { // wait for the events, keeps waiting forever
 		record, err := rd.Read()
-
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		var event Event
-
-		if err := binary.Read(
-			bytes.NewReader(record.RawSample),
-			binary.NativeEndian,
-			&event,
-		); err != nil {
+		if err := binary.Read(bytes.NewReader(record.RawSample), binary.NativeEndian, &event); err != nil {
 			log.Fatal(err)
 		}
-
 		message := bytes.TrimRight(event.Message[:], "\x00") // [H][e][l][l][o][,][ ][e][B][P][F][!][\0]... | remove trailing null bytes
-
 		log.Printf("EVENT: %s", message)
 	}
 }

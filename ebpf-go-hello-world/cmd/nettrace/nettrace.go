@@ -33,8 +33,8 @@ type Event struct { // This must correspond to your C structure: tcp_event
 	Family   uint16
 
 	Comm string
-	Cwd  string
-	Cmd  string
+	Cwd  string // user-space
+	Cmd  string // user-space
 }
 
 func main() {
@@ -48,14 +48,13 @@ func main() {
 	/* Attach:
 	SEC("tracepoint/sock/inet_sock_set_state")
 	*/
-
 	tp, err := link.Tracepoint("sock", "inet_sock_set_state", objs.TraceTcpState, nil)
 	if err != nil {
 		log.Fatalf("attaching tracepoint: %v", err)
 	}
 	defer tp.Close()
 
-	log.Println("eBPF NET tracer running...")
+	log.Println("eBPF NET TRACER Running...")
 
 	// Read the BPF ring buffer.
 	reader, err := ringbuf.NewReader(objs.Events)
@@ -67,13 +66,13 @@ func main() {
 	// Handle Ctrl-C.
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sig)
 	go func() {
 		<-sig // Wait until something is received from the sig channel.
 
 		/*
 		 * Closing the ring buffer wakes Read().
 		 */
-
 		_ = reader.Close()
 	}()
 
@@ -87,7 +86,6 @@ func main() {
 			/*
 			 * Don't continuously retry a closed reader.
 			 */
-
 			if errors.Is(err, ringbuf.ErrClosed) {
 				break
 			}
@@ -118,19 +116,8 @@ func main() {
 		event.Family = binary.LittleEndian.Uint16(record.RawSample[38:40])
 		event.Comm = string(record.RawSample[40:56])
 
-		cwd, _ := os.Readlink(
-			fmt.Sprintf("/proc/%d/cwd", event.PID),
-		)
+		cwd, cmd := getPIDCWD_CMD(event.PID)
 		event.Cwd = cwd
-
-		cmdline, err := os.ReadFile(
-			fmt.Sprintf("/proc/%d/cmdline", event.PID),
-		)
-		if err != nil {
-			cmdline = nil
-		}
-		cmd := strings.ReplaceAll(string(cmdline), "\x00", " ")
-		cmd = strings.TrimSpace(cmd)
 		event.Cmd = cmd
 
 		/*
@@ -148,7 +135,8 @@ func main() {
 		// }
 
 		fmt.Printf(
-			"PID=%d COMM=%s CWD=%s CMD=%s CONN=%s:%d->%s:%d[%s]->[%s] LATENCY=%fs\n",
+			"%d PID=%d COMM=%s CWD=%s CMD=%s CONN=%s:%d->%s:%d[%s]->[%s] LATENCY=%fs\n",
+			event.TimestampNs,
 			event.PID,
 			event.Comm,
 			event.Cwd,
@@ -162,6 +150,23 @@ func main() {
 			float64(event.LatencyNs)/1e9,
 		)
 	}
+}
+
+func getPIDCWD_CMD(PID uint32) (string, string) {
+	cwd, _ := os.Readlink(
+		fmt.Sprintf("/proc/%d/cwd", PID),
+	)
+
+	cmdline, err := os.ReadFile(
+		fmt.Sprintf("/proc/%d/cmdline", PID),
+	)
+	if err != nil {
+		cmdline = nil
+	}
+	cmd := strings.ReplaceAll(string(cmdline), "\x00", " ")
+	cmd = strings.TrimSpace(cmd)
+
+	return cwd, cmd
 }
 
 func ntohs(v uint16) uint16 {

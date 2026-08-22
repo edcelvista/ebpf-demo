@@ -77,7 +77,6 @@ read_conn_info(struct sock *sk, struct conn_info *info) {
         +----------------------------+----------------------------+
                     32 bits                    32 bits
     */
-
     info->pid = bpf_get_current_pid_tgid() >> 32;
     info->tgid = bpf_get_current_pid_tgid() & 0xffffffff;
     info->start_ns = bpf_ktime_get_ns();
@@ -228,7 +227,6 @@ int trace_tcp_state(struct trace_event_raw_inet_sock_set_state *ctx){
     /*
      * Save the tuple for future state transitions.
     */
-
     if (current.saddr != 0 || current.daddr != 0 || current.sport != 0 || current.dport != 0) {
         /*
             connections
@@ -254,34 +252,32 @@ int trace_tcp_state(struct trace_event_raw_inet_sock_set_state *ctx){
     /*
      * Emit EVERY TCP state transition.
     */
-
-    struct tcp_event *event;
-    event = bpf_ringbuf_reserve(&events, sizeof(*event), 0); // Reserve a piece of space in the BPF ring buffer where the eBPF program can write one event.
-    if (event){
-        event->timestamp_ns = bpf_ktime_get_ns();
+    struct tcp_event *e;
+    e = bpf_ringbuf_reserve(&events, sizeof(*e), 0); // Reserve a piece of space in the BPF ring buffer where the eBPF program can write one e.
+    if (e){
+        e->timestamp_ns = bpf_ktime_get_ns();
         if (current.start_ns)
-            event->latency_ns = event->timestamp_ns - current.start_ns;
+            e->latency_ns = e->timestamp_ns - current.start_ns;
         else
-            event->latency_ns = 0;
+            e->latency_ns = 0;
 
-        event->pid = current.pid;
-        event->tgid = current.tgid;
-        event->saddr = current.saddr;
-        event->daddr = current.daddr;
-        event->sport = current.sport;
-        event->dport = current.dport;
-        event->oldstate = ctx->oldstate;
-        event->newstate = ctx->newstate;
-        event->family = BPF_CORE_READ(sk, __sk_common.skc_family);
-        bpf_get_current_comm(event->comm, sizeof(event->comm));
+        e->pid = current.pid;
+        e->tgid = current.tgid;
+        e->saddr = current.saddr;
+        e->daddr = current.daddr;
+        e->sport = current.sport;
+        e->dport = current.dport;
+        e->oldstate = ctx->oldstate;
+        e->newstate = ctx->newstate;
+        e->family = BPF_CORE_READ(sk, __sk_common.skc_family);
+        bpf_get_current_comm(e->comm, sizeof(e->comm));
 
-        bpf_ringbuf_submit(event, 0);
+        bpf_ringbuf_submit(e, 0);
     }
 
     /*
      * Once CLOSE is reached, this socket's lifecycle is finished.
     */
-   
     if (ctx->newstate == TCP_CLOSE)
         bpf_map_delete_elem(&connections, &key);
 
