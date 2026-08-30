@@ -1,3 +1,14 @@
+ARCH := $(shell uname -m)
+ifeq ($(ARCH),x86_64)
+    GOARCH := amd64
+    LIBC_PATH := /lib/x86_64-linux-gnu/libc.so.6
+else ifeq ($(ARCH),aarch64)
+    GOARCH := arm64
+    LIBC_PATH := /lib/aarch64-linux-gnu/libc.so.6
+else
+    $(error Unsupported architecture: $(ARCH))
+endif
+
 init:
 	go clean -cache
 	rm -rf bin
@@ -14,7 +25,7 @@ run:
 build:
 	rm -rf bin
 	mkdir bin
-	go build -o bin/systrace .
+	GOARCH=$(GOARCH) go build -o bin/systrace .
 
 clean:
 	go clean -cache

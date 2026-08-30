@@ -1,4 +1,4 @@
-package hello
+package main
 
 import (
 	"bytes"
@@ -14,8 +14,8 @@ type Event struct { // This must correspond to your C structure:
 	Message [32]byte
 }
 
-func hello() {
-	spec, err := ebpf.LoadCollectionSpec("../bpf/bin/helloworld.bpf.o") // Load the eBPF object , clang -target bpf  parses that ELF object.
+func main() {
+	spec, err := ebpf.LoadCollectionSpec("../../bpf/bin/helloworld.bpf.o") // Load the eBPF object , clang -target bpf  parses that ELF object.
 	if err != nil {
 		log.Fatal(err)
 	}
