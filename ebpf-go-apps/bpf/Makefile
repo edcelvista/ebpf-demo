@@ -1,4 +1,4 @@
-TARGET=helloworld
+TARGET=malloctrace
 
 CLANG = clang
 LLC = llc

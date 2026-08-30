@@ -152,32 +152,80 @@ Ring buffer
 						record
 ```
 
-# Network Tracer _(sample use-case)_
+# Real-world Applications
+
+## Network Tracer
 Bind to Kernel `tracepoint/sock/inet_sock_set_state` and capture each connection states and calculate latency.
 
+### Network Call (via curl)
 ```
 $ curl https://httpbin.org/delay/5
 {
-  "args": {},
-  "data": "",
-  "files": {},
-  "form": {},
+  "args": {}, 
+  "data": "", 
+  "files": {}, 
+  "form": {}, 
   "headers": {
-    "Accept": "*/*",
-    "Host": "httpbin.org",
-    "User-Agent": "curl/8.5.0",
-    "X-Amzn-Trace-Id": "Root=1-6a888743-2fd9dcf10d24a4334b57eba0"
-  },
-  "origin": "110.93.90.236",
+    "Accept": "*/*", 
+    "Host": "httpbin.org", 
+    "User-Agent": "curl/8.5.0", 
+    "X-Amzn-Trace-Id": "Root=1-6a944381-2bd25f303829a6cc75d7c0f1"
+  }, 
+  "origin": "13.63.92.146", 
   "url": "https://httpbin.org/delay/5"
 }
 ```
 
+### eBPF Trace Response
 ```
-2026/08/22 01:13:34 eBPF NET tracer running...
-PID=11445 COMM=curl CWD=/home/ubuntu CMD=curl https://httpbin.org/delay/5 CONN=192.168.252.101:0->44.219.72.9:443[CLOSE]->[SYN_SENT] LATENCY=0.000016s
-PID=11445 COMM=ksoftirqd/0 CWD=/home/ubuntu CMD=curl https://httpbin.org/delay/5 CONN=192.168.252.101:56766->44.219.72.9:443[SYN_SENT]->[ESTABLISHED] LATENCY=0.323301s
-PID=11445 COMM=curl CWD=/home/ubuntu CMD=curl https://httpbin.org/delay/5 CONN=192.168.252.101:56766->44.219.72.9:443[ESTABLISHED]->[FIN_WAIT1] LATENCY=6.163560s
-PID=11445 COMM=ksoftirqd/0 CWD= CMD= CONN=192.168.252.101:56766->44.219.72.9:443[FIN_WAIT1]->[CLOSING] LATENCY=6.467346s
-PID=11445 COMM=ksoftirqd/0 CWD= CMD= CONN=192.168.252.101:56766->44.219.72.9:443[CLOSING]->[CLOSE] LATENCY=6.467651s
+2026/08/30 14:51:40 eBPF NET TRACER Running...
+40885860438216 PID=67331 COMM=curl CWD=/apps/workspace CMD=curl https://httpbin.org/delay/5 CONN=172.31.36.100:0->34.195.135.204:443[CLOSE]->[SYN_SENT] LATENCY=0.000005s
+40885971493883 PID=67331 COMM=swapper/1 CWD=/apps/workspace CMD=curl https://httpbin.org/delay/5 CONN=172.31.36.100:59690->34.195.135.204:443[SYN_SENT]->[ESTABLISHED] LATENCY=0.111060s
+40891598247263 PID=67331 COMM=curl CWD=/apps/workspace CMD=curl https://httpbin.org/delay/5 CONN=172.31.36.100:59690->34.195.135.204:443[ESTABLISHED]->[FIN_WAIT1] LATENCY=5.737814s
+40891708413452 PID=67331 COMM=swapper/0 CWD= CMD= CONN=172.31.36.100:59690->34.195.135.204:443[FIN_WAIT1]->[CLOSING] LATENCY=5.847980s
+40891709178451 PID=67331 COMM=swapper/0 CWD= CMD= CONN=172.31.36.100:59690->34.195.135.204:443[CLOSING]->[CLOSE] LATENCY=5.848745s
 ```
+Note: It shows Latency between syscall eg. `[FIN_WAIT1]` it waits around 5s.
+
+## System Call Tracer
+Detect all system call entry by tapping from `raw_tracepoint/sys_enter`.
+_Example C Program that invokes couple of kernel syscalls_
+[systrace-test.c](./ebpf-go-hello-world/bpf/systrace-test/systrace-test.c)
+```
+make build && ./systrace-test /etc/passwd # shows pid 84199
+```
+
+### eBPF Trace Response
+```
+Enter PID: 84199
+Tracing PID 84199
+PID 84199 exists
+2026/08/30 15:56:03 eBPF SYS TRACER Running...
+44745163818002 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=openat SYS_CALL_ID=257
+44745163856479 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=write SYS_CALL_ID=1
+44745163872943 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=fstat SYS_CALL_ID=5
+44745163877868 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=write SYS_CALL_ID=1
+44745163895847 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=read SYS_CALL_ID=0
+44745163901454 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=close SYS_CALL_ID=3
+44745163906780 PID=84199 COMM=sy CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/systrace-test CMD=./systrace-test /etc/passwd SYS_CALL=clock_nanosleep SYS_CALL_ID=230
+```
+It shows the list of syscall made by the running program eg. `read()` `clock_nanosleep()`
+
+## Malloc Tracer
+Bind `uprobe/malloc` which detects when userspace allocate memory via `malloc()`
+_Example C Program that allocates memory via malloc_
+[malloc-test.c](./ebpf-go-hello-world/bpf/malloc-test/malloc-test.c)
+```
+./malloc-test 10496000
+PID: 88199
+Allocated: 10496000 bytes (10.01 MiB)
+```
+
+### eBPF Trace Response
+```
+eBPF Program=trace_malloc Section=uprobe/malloc
+Arch: amd64 | libcPath: /lib/x86_64-linux-gnu/libc.so.6
+45251111664393 PID=88199 COMM=malloc-test CWD=/apps/workspace/ebpf-demo/ebpf-go-hello-world/bpf/malloc-test CMD=./malloc-test 10496000 SID=18446744073709551599 TGID=88199 UID=1000 SIZE=malloc: 10496000 bytes: (10.01 MB)
+```
+
+The trace shows the exact amount of memory allocated and who allocated it including the PID Command.

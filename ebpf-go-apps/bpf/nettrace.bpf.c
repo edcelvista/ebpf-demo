@@ -63,8 +63,8 @@ struct {
     __uint(max_entries, 1 << 24);
 } events SEC(".maps");
 
-static __always_inline void
-read_conn_info(struct sock *sk, struct conn_info *info) {
+// tells the compiler to inline the function whenever possible. In eBPF, this is commonly used for helper functions so the function body gets inserted at its call site. Not called but statically injected the code during compile
+static __always_inline void read_conn_info(struct sock *sk, struct conn_info *info) {
     info->saddr = BPF_CORE_READ(sk, __sk_common.skc_rcv_saddr);
     info->daddr = BPF_CORE_READ(sk, __sk_common.skc_daddr);
     info->sport = BPF_CORE_READ(sk, __sk_common.skc_num);
@@ -94,7 +94,7 @@ read_conn_info(struct sock *sk, struct conn_info *info) {
 
 SEC("tracepoint/sock/inet_sock_set_state")
 int trace_tcp_state(struct trace_event_raw_inet_sock_set_state *ctx){
-    struct sock *sk = (struct sock *)ctx->skaddr; // Received Kernen Event Message and store into sock struct provided by vmlinux library
+    struct sock *sk = (struct sock *)ctx->skaddr; // Received Kernel Event Message and store into sock struct provided by vmlinux library
     if (!sk)
         return 0;
 
