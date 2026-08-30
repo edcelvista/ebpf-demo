@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv){
     if (argc != 2) {
-        printf(stderr, "Usage: %s filename with full path to open.\n", argv[0]);
+        fprintf(stderr, "Usage: %s filename with full path to open.\n", argv[0]);
         return 1;
     }
 
