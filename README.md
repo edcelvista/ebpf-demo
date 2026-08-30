@@ -229,3 +229,13 @@ Arch: amd64 | libcPath: /lib/x86_64-linux-gnu/libc.so.6
 ```
 
 The trace shows the exact amount of memory allocated and who allocated it including the PID Command.
+
+
+**References:**
+- https://manual.cs50.io/
+- https://docs.ebpf.io/ebpf-library/libbpf/ebpf/BPF_CORE_READ/
+- https://github.com/cilium/ebpf
+- https://github.com/iovisor/bcc/blob/master/docs/reference_guide.md
+- https://man7.org/linux/man-pages/man7/bpf-helpers.7.html
+- https://elixir.bootlin.com/linux/v7.2/source/tools/testing/selftests/bpf
+- https://100go.co/#error-management
